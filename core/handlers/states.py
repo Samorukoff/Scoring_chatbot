@@ -1,0 +1,21 @@
+from aiogram.fsm.state import StatesGroup, State
+
+class Form(StatesGroup):
+    age = State()
+    occupation = State()
+    annual_income = State()
+    payment_behaviour = State()
+    monthly_salary = State()
+    bank_accounts = State()
+    credit_cards = State()
+    interest_rate = State()
+    delay_from_due_date = State()
+    delayed_payments = State()
+    changed_credit_limit = State()
+    credit_inquiries = State()
+    outstanding_debt = State()
+    credit_util_ratio = State()
+    credit_history_age = State()
+    total_emi = State()
+    monthly_investment = State()
+    monthly_balance = State()
