@@ -1,20 +1,22 @@
 import logging
 import re
-from aiogram import Router, F, CommandStart
+from aiogram import Router, F
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 
-from handlers.states import Form
+from core.handlers.states import Form
 
 router = Router()
 logging.basicConfig(level=logging.INFO)
 
 # Начальный экран
-@router.message(CommandStart)
-async def start(message: Message):
-    await message.answer('Добро пожаловать в ФБИ-Банк!\n' \
-    'Для получения своего кредитного рейтинга вам необходимо пройти небольшое тестирование.' \
+@router.message(CommandStart())
+async def start(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer('Добро пожаловать в ФБИ-Банк!\n\n'
+    'Для получения своего кредитного рейтинга вам необходимо пройти небольшое тестирование.'
     'По его результатам мы сможем оценить ваш уровень кредитоспособности для дальнейшего кредитования\n\n'
     'Если готовы начать тестирование, нажмите кнопку "СТАРТ"', reply_markup = InlineKeyboardMarkup(inline_keyboard=
                                      [[InlineKeyboardButton(text='▶️ СТАРТ', callback_data='start_test')]]))
@@ -35,7 +37,7 @@ async def validate_and_store(message: Message, state: FSMContext, field, cast_ty
         return False
 
 # Вопросы
-@router.callback_query(F.data('start_test'))
+@router.callback_query(F.data == 'start_test')
 async def ask_age(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.age)
@@ -43,7 +45,7 @@ async def ask_age(call: CallbackQuery, state: FSMContext):
 
 @router.message(Form.age)
 async def ask_income(message: Message, state: FSMContext):
-    if await validate_and_store(message, state, "age", int, 14, 120):
+    if await validate_and_store(message, state, "age", int, 18, 120):
         await state.set_state(Form.occupation)
         await message.answer("Укажите вашу специальность из предложенного списка:",
                              reply_markup = InlineKeyboardMarkup(inline_keyboard=[
@@ -54,7 +56,7 @@ async def ask_income(message: Message, state: FSMContext):
                                 [InlineKeyboardButton(text="Художник/дизайнер", callback_data="Occupation_Artist")],
                                 [InlineKeyboardButton(text="Ученый", callback_data="Occupation_Scientist")],
                                 [InlineKeyboardButton(text="Бухгалтер", callback_data="Occupation_Accountant")],
-                                [InlineKeyboardButton(text="Продавец", callback_data="Occupation_Salesperson")],
+                                [InlineKeyboardButton(text="Маркетолог", callback_data="Occupation_Salesperson")],
                                 [InlineKeyboardButton(text="Менеджер", callback_data="Occupation_Manager")],
                                 [InlineKeyboardButton(text="Медсестра", callback_data="Occupation_Nurse")],
                                 [InlineKeyboardButton(text="Другое", callback_data="Occupation________")]
@@ -71,15 +73,15 @@ async def ask_income(call: CallbackQuery, state: FSMContext):
 @router.message(Form.annual_income)
 async def ask_salary(message: Message, state: FSMContext):
     if await validate_and_store(message, state, "annual_income", float, 0):
-        await state.set_state(Form.monthly_salary)
+        await state.set_state(Form.payment_behaviour)
         await message.answer("Охарактеризуйте ваше финансовое поведение",
                              reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                                [InlineKeyboardButton(text="Высокие траты / Большие выплаты", callback_data="Payment_Behaviour_High_spent_Large_value_payments")],
-                                [InlineKeyboardButton(text="Высокие траты / Medium payments", callback_data="Payment_Behaviour_High_spent_Medium_value_payments")],
-                                [InlineKeyboardButton(text="Высокие траты / Small payments", callback_data="Payment_Behaviour_High_spent_Small_value_payments")],
-                                [InlineKeyboardButton(text="Низкие траты / Большие выплаты", callback_data="Payment_Behaviour_Low_spent_Large_value_payments")],
-                                [InlineKeyboardButton(text="Низкие траты / Средние выплаты", callback_data="Payment_Behaviour_Low_spent_Medium_value_payments")],
-                                [InlineKeyboardButton(text="Низкие траты / Маленькие выплаты", callback_data="Payment_Behaviour_Low_spent_Small_value_payments")],
+                                [InlineKeyboardButton(text="Высокие расходы / Крупные платежи", callback_data="Payment_Behaviour_High_spent_Large_value_payments")],
+                                [InlineKeyboardButton(text="Высокие расходы / Средние платежи", callback_data="Payment_Behaviour_High_spent_Medium_value_payments")],
+                                [InlineKeyboardButton(text="Высокие расходы / Небольшие платежи", callback_data="Payment_Behaviour_High_spent_Small_value_payments")],
+                                [InlineKeyboardButton(text="Низкие расходы / Крупные платежи", callback_data="Payment_Behaviour_Low_spent_Large_value_payments")],
+                                [InlineKeyboardButton(text="Низкие расходы / Средние платежи", callback_data="Payment_Behaviour_Low_spent_Medium_value_payments")],
+                                [InlineKeyboardButton(text="Низкие расходы / Небольшие платежи", callback_data="Payment_Behaviour_Low_spent_Small_value_payments")],
                             ]))
 
 @router.callback_query(Form.payment_behaviour)
@@ -88,7 +90,7 @@ async def ask_salary(call: CallbackQuery, state: FSMContext):
     value = str(call.data)
     await state.update_data({'payment_behaviour': value})
     await state.set_state(Form.monthly_salary)
-    await call.message.answer("Какая сумма остаётся у вас на руках в месяц после всех платежей?")
+    await call.message.answer("Какая сумма остаётся у вас на руках в месяц после всех выплат по кредитам?")
 
 @router.message(Form.monthly_salary)
 async def ask_accounts(message: Message, state: FSMContext):
@@ -111,8 +113,23 @@ async def ask_interest(message: Message, state: FSMContext):
 @router.message(Form.interest_rate)
 async def ask_delay_days(message: Message, state: FSMContext):
     if await validate_and_store(message, state, "interest_rate", float, 0, 100):
-        await state.set_state(Form.delay_from_due_date)
-        await message.answer("В среднем на сколько дней вы опаздываете с оплатой?")
+        await state.set_state(Form.min_amount)
+        await message.answer("Вы обычно платите только минимальный обязательный платёж по кредиту?",
+                             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                                [InlineKeyboardButton(text="Да, только минимальный", callback_data="yes")],
+                                [InlineKeyboardButton(text="Нет, плачу больше", callback_data="no")]]))
+
+@router.callback_query(Form.min_amount)
+async def ask_delay_days(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    value = str(call.data)
+    if value == 'yes':
+        value = True
+    if value == 'no':
+        value = False
+    await state.update_data({'payment_of_min_amount': value})
+    await state.set_state(Form.delay_from_due_date)
+    await call.message.answer("В среднем на сколько дней вы опаздываете с оплатой?")
 
 @router.message(Form.delay_from_due_date)
 async def ask_delayed_count(message: Message, state: FSMContext):
@@ -124,7 +141,7 @@ async def ask_delayed_count(message: Message, state: FSMContext):
 async def ask_credit_change(message: Message, state: FSMContext):
     if await validate_and_store(message, state, "delayed_payments", int, 0):
         await state.set_state(Form.changed_credit_limit)
-        await message.answer("Укажите изменение кредитного лимита (например, -2000 или 5000)")
+        await message.answer("Укажите изменение кредитного лимита\n(например, -2000 или 5000)")
 
 @router.message(Form.changed_credit_limit)
 async def ask_inquiries(message: Message, state: FSMContext):

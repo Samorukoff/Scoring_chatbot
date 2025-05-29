@@ -8,6 +8,7 @@ from sklearn.ensemble import GradientBoostingClassifier, BaggingClassifier, Stac
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 from sklearn.metrics import classification_report
@@ -22,7 +23,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-def download_data():
+def create_model():
     # Загрузка данных
     logging.info("Загрузка данных...")
     df = pd.read_csv("core/database/database.csv")
@@ -32,9 +33,7 @@ def download_data():
     # Разделение на обучающую и тестовую выборки
     logging.info("Разделение на обучающую и тестовую выборки...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    return X_train, X_test, y_train, y_test
 
-def create_model(X_train, X_test, y_train, y_test):
     # Базовые модели
     logging.info("Инициализация базовых моделей...")
     base_models = [
@@ -50,10 +49,10 @@ def create_model(X_train, X_test, y_train, y_test):
             StandardScaler(),
             LogisticRegression(
                 max_iter=1000,
-                class_weight='balanced',
+                class_weight=None,
                 solver='lbfgs',
                 penalty='l2',
-                C=0.1
+                C=10
             ))),
 
         ('dt', DecisionTreeClassifier(
@@ -61,7 +60,7 @@ def create_model(X_train, X_test, y_train, y_test):
             splitter='best',
             max_depth=7,
             min_samples_split=10,
-            min_samples_leaf=1,
+            min_samples_leaf=5,
             class_weight=None
         ))
     ]
@@ -76,7 +75,7 @@ def create_model(X_train, X_test, y_train, y_test):
         random_state=42
     )
     bag = BaggingClassifier(
-        estimator=DecisionTreeClassifier(class_weight='balanced'),
+        estimator=DecisionTreeClassifier(),
         n_estimators=50,
         max_samples=0.8,
         max_features=0.5,
@@ -88,7 +87,7 @@ def create_model(X_train, X_test, y_train, y_test):
     logging.info("Создание стекинг-модели...")
     stacking = StackingClassifier(
         estimators=base_models + [('gb', gb), ('bag', bag)],
-        final_estimator=LogisticRegression(max_iter=1000),
+        final_estimator=RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42),
         passthrough=False,
         cv=5,
         n_jobs=-1
@@ -108,34 +107,18 @@ def create_model(X_train, X_test, y_train, y_test):
     print(classification_report(y_test, y_pred))
 
     # Получаем веса (коэффициенты) LogisticRegression
-    coefs = stacking.final_estimator_.coef_[0]
-
-    # Формируем имена признаков по моделям
-    feature_names = []
-    for name, model in stacking.named_estimators_.items():
-        if hasattr(model, "predict_proba"):
-            n_classes = model.predict_proba(X_test).shape[1]
-            for i in range(n_classes):
-                feature_names.append(f"{name}_class_{i}")
-        else:
-            feature_names.append(f"{name}_pred")
-
-    # Создаём DataFrame для удобного отображения
-    weights_df = pd.DataFrame({
-        'Признак': feature_names,
-        'Вес (Logit)': coefs
-    }).sort_values(by='Вес (Logit)', key=abs, ascending=False)
-
-    # Выводим
-    print(weights_df.to_string(index=False))
+    importances = stacking.final_estimator_.feature_importances_
+    print(importances)
 
     # Выгрузка модели
     logging.info("Сохранение модели в файл 'core/model/_stacking_model.pkl'...")
     joblib.dump(stacking, 'core/model/_stacking_model.pkl')
+
+    # Порядок переменных для дальнейшей работы
+    joblib.dump(X_train.columns.tolist(), "core/model/_feature_order.pkl")
     
     return stacking
 
 # Запуск
-X_train, X_test, y_train, y_test = download_data()
-create_model(X_train, X_test, y_train, y_test)
+create_model()
 

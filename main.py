@@ -3,7 +3,8 @@ from aiogram.types import BotCommand
 import logging
 import asyncio
 
-from core.handlers.score_test import router
+from core.handlers.score_test import router as test_router
+from core.handlers.score_rate import router as rate_router
 
 from core.settings import settings
 
@@ -14,7 +15,8 @@ async def start():
     dp = Dispatcher()
 
     # Подключаем все роутеры
-    dp.include_router(router)
+    dp.include_router(test_router)
+    dp.include_router(rate_router)
 
     # Установка команд для бота
     await bot.set_my_commands([BotCommand(command="start", description="Запустить бота")])

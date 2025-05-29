@@ -21,3 +21,4 @@ def get_settings(path: str = "config.env"):
             bot_token=env.str("TOKEN"),
         )
     )
+settings = get_settings()

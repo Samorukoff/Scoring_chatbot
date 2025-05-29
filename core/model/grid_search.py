@@ -1,16 +1,26 @@
+import pandas as pd
+
 from sklearn.ensemble import GradientBoostingClassifier, BaggingClassifier
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import BaggingClassifier
 
-from stacking import X_train, y_train
+def grid_search():
 
-def grid_search ():
+    df = pd.read_csv("core/database/database.csv")
+    X = df.drop(columns=['Credit_Score'])
+    y = df['Credit_Score']
+
+    # Разделение на обучающую и тестовую выборки
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
     # К-ближайших соседей
     knn_pipe = make_pipeline(StandardScaler(), KNeighborsClassifier())
     knn_params = {
@@ -59,8 +69,6 @@ def grid_search ():
     print("Best GradientBoosting:", gb_search.best_params_)
 
     # Бэгинг (дерево решений)
-    from sklearn.ensemble import BaggingClassifier
-
     bag = BaggingClassifier(estimator=DecisionTreeClassifier())
     bag_params = {
         'n_estimators': [10, 50],

@@ -9,6 +9,7 @@ class Form(StatesGroup):
     bank_accounts = State()
     credit_cards = State()
     interest_rate = State()
+    min_amount = State()
     delay_from_due_date = State()
     delayed_payments = State()
     changed_credit_limit = State()
@@ -19,3 +20,4 @@ class Form(StatesGroup):
     total_emi = State()
     monthly_investment = State()
     monthly_balance = State()
+    result = State()

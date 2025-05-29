@@ -48,6 +48,24 @@ def clear_dataset(df):
 
     df['Credit_History_Age'] = df['Credit_History_Age'].apply(parse_credit_age)
 
+    # Заменяем аномальные значения на NaN
+    df['Age'] = df['Age'].where(df['Age'].between(18, 100), np.nan)
+    df['Annual_Income'] = df['Annual_Income'].where(df['Annual_Income'] > 0, np.nan)
+    df['Monthly_Inhand_Salary'] = df['Monthly_Inhand_Salary'].where(df['Monthly_Inhand_Salary'] > 0, np.nan)
+    df['Num_Bank_Accounts'] = df['Num_Bank_Accounts'].where(df['Num_Bank_Accounts'] <= 20, np.nan)
+    df['Num_Credit_Card'] = df['Num_Credit_Card'].where(df['Num_Credit_Card'] <= 15, np.nan)
+    df['Interest_Rate'] = df['Interest_Rate'].where(df['Interest_Rate'].between(0, 100), np.nan)
+    df['Delay_from_due_date'] = df['Delay_from_due_date'].where(df['Delay_from_due_date'].between(0, 365), np.nan)
+    df['Num_of_Delayed_Payment'] = df['Num_of_Delayed_Payment'].where(df['Num_of_Delayed_Payment'] <= 60, np.nan)
+    df['Changed_Credit_Limit'] = df['Changed_Credit_Limit'].where(df['Changed_Credit_Limit'].between(-1e6, 1e6), np.nan)
+    df['Num_Credit_Inquiries'] = df['Num_Credit_Inquiries'].where(df['Num_Credit_Inquiries'] <= 50, np.nan)
+    df['Outstanding_Debt'] = df['Outstanding_Debt'].where(df['Outstanding_Debt'].between(0, 1e6), np.nan)
+    df['Credit_Utilization_Ratio'] = df['Credit_Utilization_Ratio'].where(df['Credit_Utilization_Ratio'].between(0, 100), np.nan)
+    df['Credit_History_Age'] = df['Credit_History_Age'].where(df['Credit_History_Age'] <= 480, np.nan)
+    df['Total_EMI_per_month'] = df['Total_EMI_per_month'].where(df['Total_EMI_per_month'] < 100000, np.nan)
+    df['Amount_invested_monthly'] = df['Amount_invested_monthly'].where(df['Amount_invested_monthly'].between(0, 50000), np.nan)
+    df['Monthly_Balance'] = df['Monthly_Balance'].where(df['Monthly_Balance'].between(-1e6, 1e6), np.nan)
+
     # Заполняем пропуски медианами
     for col in df.select_dtypes(include=['float64', 'int64']).columns:
         df[col] = df[col].fillna(df[col].median())
