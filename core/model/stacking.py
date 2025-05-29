@@ -78,9 +78,9 @@ def create_model(X_train, X_test, y_train, y_test):
     bag = BaggingClassifier(
         estimator=DecisionTreeClassifier(class_weight='balanced'),
         n_estimators=50,
-        max_samples=1.0,
-        max_features=1.0,
-        bootstrap=True,
+        max_samples=0.8,
+        max_features=0.5,
+        bootstrap=False,
         random_state=42
     )
 
@@ -136,6 +136,6 @@ def create_model(X_train, X_test, y_train, y_test):
     return stacking
 
 # Запуск
-# X_train, X_test, y_train, y_test = download_data()
-# create_model(X_train, X_test, y_train, y_test)
+X_train, X_test, y_train, y_test = download_data()
+create_model(X_train, X_test, y_train, y_test)
 
