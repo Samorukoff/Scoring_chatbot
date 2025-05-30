@@ -8,7 +8,6 @@ from sklearn.ensemble import GradientBoostingClassifier, BaggingClassifier, Stac
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 from sklearn.metrics import classification_report
@@ -49,17 +48,15 @@ def create_model():
             StandardScaler(),
             LogisticRegression(
                 max_iter=1000,
-                class_weight=None,
+                class_weight='balanced',
                 solver='lbfgs',
                 penalty='l2',
-                C=10
+                C=0.1
             ))),
 
         ('dt', DecisionTreeClassifier(
-            criterion='gini',
-            splitter='best',
             max_depth=7,
-            min_samples_split=10,
+            min_samples_split=2,
             min_samples_leaf=5,
             class_weight=None
         ))
@@ -75,10 +72,13 @@ def create_model():
         random_state=42
     )
     bag = BaggingClassifier(
-        estimator=DecisionTreeClassifier(),
-        n_estimators=50,
+        estimator=DecisionTreeClassifier(max_depth=7,
+                                         min_samples_split=2,
+                                         min_samples_leaf=5,
+                                         class_weight=None),
+        n_estimators=10,
         max_samples=0.8,
-        max_features=0.5,
+        max_features=0.8,
         bootstrap=False,
         random_state=42
     )
@@ -87,7 +87,11 @@ def create_model():
     logging.info("Создание стекинг-модели...")
     stacking = StackingClassifier(
         estimators=base_models + [('gb', gb), ('bag', bag)],
-        final_estimator=RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42),
+        final_estimator=LogisticRegression(max_iter=1000,
+                                           class_weight='balanced',
+                                           solver='lbfgs',
+                                           penalty='l2',
+                                           C=0.1),
         passthrough=False,
         cv=5,
         n_jobs=-1

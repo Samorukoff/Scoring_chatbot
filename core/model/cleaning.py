@@ -81,8 +81,26 @@ def clear_dataset(df):
     df.to_csv('core/database/database.csv', index=False)
     return df
 
+def merge_data():
+
+    # Загружаем реальный и синтетические датасеты
+    real_df = pd.read_csv('core/database/database.csv')
+    synthetic_df_0 = pd.read_csv('core/database/generated_class_0_clean.csv')
+    synthetic_df_2 = pd.read_csv('core/database/generated_class_2_clean.csv')
+
+    # Проверяем и приводим порядок столбцов к такому же, как в реальном датасете
+    synthetic_df_0 = synthetic_df_0[real_df.columns]
+    synthetic_df_2 = synthetic_df_2[real_df.columns]
+
+    # Объединяем все вместе
+    combined_df = pd.concat([real_df, synthetic_df_0, synthetic_df_2], axis=0).reset_index(drop=True)
+
+    # Сохраняем в исходный CSV
+    combined_df.to_csv('core/database/database.csv', index=False)
+
 # Запуск
 # df = download()
 # check_dataset(df)
 # df = clear_dataset(df)
 # check_dataset(df)
+# merge_data()

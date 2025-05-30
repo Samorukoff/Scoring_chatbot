@@ -48,21 +48,21 @@ async def result(message: Message, state: FSMContext):
 
         input_data = {
             'Age': int(data['age']),
-            'Annual_Income': float(data['annual_income']) / usd_rate,
-            'Monthly_Inhand_Salary': float(data['monthly_salary']) / usd_rate,
+            'Annual_Income': round(float(data['annual_income']) / usd_rate, 2),
+            'Monthly_Inhand_Salary': round(float(data['monthly_salary']) / usd_rate, 2),
             'Num_Bank_Accounts': int(data['bank_accounts']),
             'Num_Credit_Card': int(data['credit_cards']),
-            'Interest_Rate': float(data['interest_rate']),
+            'Interest_Rate': round(float(data['interest_rate']), 2),
             'Delay_from_due_date': int(data['delay_from_due_date']),
             'Num_of_Delayed_Payment': int(data['delayed_payments']),
-            'Changed_Credit_Limit': float(data['changed_credit_limit']) / usd_rate,
+            'Changed_Credit_Limit': round(float(data['changed_credit_limit']) / usd_rate, 2),
             'Num_Credit_Inquiries': int(data['credit_inquiries']),
-            'Outstanding_Debt': float(data['outstanding_debt']) / usd_rate,
-            'Credit_Utilization_Ratio': float(data['credit_util_ratio']),
+            'Outstanding_Debt': round(float(data['outstanding_debt']) / usd_rate, 2),
+            'Credit_Utilization_Ratio': round(float(data['credit_util_ratio']), 2),
             'Credit_History_Age': int(data['credit_history_age']),
-            'Total_EMI_per_month': float(data['total_emi']) / usd_rate,
-            'Amount_invested_monthly': float(data['monthly_investment']) / usd_rate,
-            'Monthly_Balance': float(data['monthly_balance']) / usd_rate,
+            'Total_EMI_per_month': round(float(data['total_emi']) / usd_rate, 2),
+            'Amount_invested_monthly': round(float(data['monthly_investment']) / usd_rate, 2),
+            'Monthly_Balance': round(float(data['monthly_balance']) / usd_rate, 2),
         }
 
         # --------- Добавим категориальные признаки ---------
@@ -127,10 +127,11 @@ async def result(message: Message, state: FSMContext):
         prediction_index = int(model.predict(X_input)[0])
         prediction = labels.get(prediction_index, "Неопределенный")
 
+        # Определяем числовой рейтинг исходя из вероятностей
         probs = model.predict_proba(X_input)
-        print(probs)
-        print(X_input)
-        print(model.predict(X_input)[0])
+        probs = probs[0]
+        logging.info(f'Вероятности: {probs}')
+        rate = int((probs[0] * 0 + probs[1] * 0.5 + probs[2] * 1) * 999)
 
         # Вывод ответов
         lines = ["📋 *Введённые данные:*"]
@@ -148,7 +149,7 @@ async def result(message: Message, state: FSMContext):
         answer_text = "\n".join(lines)
 
         await message.answer(
-            f'Ваш кредитный рейтинг: *{prediction}*\n\n{answer_text}',
+            f'Ваш кредитный рейтинг: *{prediction}*\n\n*{rate} баллов*\n\n{answer_text}',
             parse_mode='Markdown',
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                                 [InlineKeyboardButton(text="Вернуться в начало", callback_data="go_to_start")]])

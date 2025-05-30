@@ -23,7 +23,11 @@ def check_coefs():
     X_test_scaled = scaler.transform(X_test)
 
     # Обучаем логистическую регрессию
-    model = LogisticRegression(max_iter=1000, multi_class="ovr")
+    model = LogisticRegression(max_iter=1000,
+                                class_weight='balanced',
+                                solver='lbfgs',
+                                penalty='l2',
+                                C=0.1)
     model.fit(X_train_scaled, y_train)
 
     # Получаем коэффициенты
