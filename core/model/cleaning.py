@@ -9,19 +9,32 @@ def download ():
 
 # Информация о датасете
 def check_dataset (df):
-    # Атрибуты
-    print(df.columns)
+    print("Общая информация о датасете")
+    print("=" * 40)
 
-    # Проверка на пропущенные значения
-    missing_values = df.isnull().sum()
-    print(f'Пропущенные значения:\n{missing_values}')
+    # Размер датасета
+    print(f"Количество строк: {df.shape[0]}")
+    print(f"Количество столбцов: {df.shape[1]}\n")
 
-    # Проверка на уникальность
-    unique_values = df.nunique()
-    print(f'Уникальные значения:\n{unique_values}')
+    # Названия столбцов
+    print("Список столбцов:")
+    print(df.columns.tolist(), "\n")
 
-    # Форматы
-    print(f'Форматы данных:\n{df.dtypes}')
+    # Пропущенные значения
+    print("Пропущенные значения:")
+    print(df.isnull().sum(), "\n")
+
+    # Уникальные значения
+    print("Уникальные значения по каждому столбцу:")
+    print(df.nunique(), "\n")
+
+    # Типы данных
+    print("Типы данных:")
+    print(df.dtypes, "\n")
+
+    # Статистика по числовым признакам
+    print("Описательная статистика:")
+    print(df.describe())
 
 # Предобработка данных
 def clear_dataset(df):
@@ -98,9 +111,12 @@ def merge_data():
     # Сохраняем в исходный CSV
     combined_df.to_csv('core/database/database.csv', index=False)
 
+    return combined_df
+
 # Запуск
 # df = download()
 # check_dataset(df)
 # df = clear_dataset(df)
 # check_dataset(df)
-# merge_data()
+# df = merge_data()
+# check_dataset(df)
