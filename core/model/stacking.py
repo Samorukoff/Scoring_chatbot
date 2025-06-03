@@ -124,5 +124,5 @@ def create_model():
     return stacking
 
 # Запуск
-create_model()
+# create_model()
 

@@ -24,4 +24,4 @@ def visualise_num():
         plt.show()
 
 # Запуск
-visualise_num()
+# visualise_num()
